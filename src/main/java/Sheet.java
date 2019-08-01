@@ -12,13 +12,18 @@ import com.google.api.services.sheets.v4.Sheets;
 import com.google.api.services.sheets.v4.SheetsScopes;
 import com.google.api.services.sheets.v4.model.ValueRange;
 
+import javax.swing.text.MaskFormatter;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.security.GeneralSecurityException;
+import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Stack;
+import java.util.regex.Pattern;
 
 public class Sheet {
     private static final String APPLICATION_NAME = "Google Sheets API Java Quickstart";
@@ -61,27 +66,61 @@ public class Sheet {
      * Prints the names and majors of students in a sample spreadsheet:
      * https://docs.google.com/spreadsheets/d/1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms/edit
      */
-    public List<List<Object>> getData() throws IOException, GeneralSecurityException {
+    public Stack<String> getData(String value) {
         // Build a new authorized API client service.
-        final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
-        final String spreadsheetId = "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms";
-        final String range = "Class Data!A2:E";
-        Sheets service = new Sheets.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
-                .setApplicationName(APPLICATION_NAME)
-                .build();
-        ValueRange response = service.spreadsheets().values()
-                .get(spreadsheetId, range)
-                .execute();
-        List<List<Object>> values = response.getValues();
-        if (values == null || values.isEmpty()) {
-            System.out.println("No data found.");
-        } else {
-            System.out.println("Name, Major");
-            for (List row : values) {
-                // Print columns A and E, which correspond to indices 0 and 4.
-                System.out.printf("%s, %s\n", row.get(0), row.get(4));
+        NetHttpTransport HTTP_TRANSPORT;
+        ValueRange response = null;
+        Stack<String> result = new Stack<String>();
+        final String spreadsheetId = "1WHQd7TRGWohtwGl9EL-vduud4DEC4GORR2jt5Nd4Aio";
+        for(int i=0;i<Commands.TABS.size();i++) {
+            try {
+                HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+                final String range = "'" + Commands.TABS.get(i) + "'!D2:D";
+                Sheets service = new Sheets.Builder(HTTP_TRANSPORT, JSON_FACTORY, getCredentials(HTTP_TRANSPORT))
+                        .setApplicationName(APPLICATION_NAME)
+                        .build();
+                response = service.spreadsheets().values()
+                        .get(spreadsheetId, range)
+                        .execute();
+            } catch (GeneralSecurityException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            List<List<Object>> values = response.getValues();
+            if (values == null || values.isEmpty()) {
+                System.out.println("No data found.");
+            } else {
+                for (List row : values) {
+                    if (row.size() != 0) {
+                        String word = row.get(0).toString().toUpperCase();
+                        if (word.length() == 8 || word.length() == 9) {
+                            String otherFormatWord = createOtherFormat(word);
+                            if (word.matches(value) || otherFormatWord.matches(value)) {
+                                System.out.printf("%s\n", row.get(0));
+                                result.push(word);
+                            }
+                        } else {
+                            if (word.matches(value)) {
+                                System.out.printf("%s\n", row.get(0));
+                                result.push(word);
+                            }
+                        }
+                    }
+                }
             }
         }
-        return values;
+        return result;
+    }
+
+    private String createOtherFormat(String word) {
+        if(word.length() == 8) {
+            return Character.toString(word.charAt(3)) + word.charAt(0) + word.charAt(1) +
+                    word.charAt(2) + word.charAt(4) + word.charAt(5) +
+                    word.charAt(6) + word.charAt(7);
+        } else return Character.toString(word.charAt(3)) + word.charAt(0) + word.charAt(1) +
+                word.charAt(2) + word.charAt(4) + word.charAt(5) +
+                word.charAt(6) + word.charAt(7) + word.charAt(8);
     }
 }

@@ -7,9 +7,9 @@ import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.exceptions.TelegramApiException;
 
 import java.io.*;
-import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Stack;
 
 public class Bot extends TelegramLongPollingBot {
 
@@ -18,20 +18,44 @@ public class Bot extends TelegramLongPollingBot {
             if(update.getMessage().hasText()) {
                 String msgText = update.getMessage().getText();
                 String chatId = update.getMessage().getChatId().toString();
-                if(msgText.equals(Commands.CONNECT_WITH_MANAGER)) {
+                if(msgText.equals(Commands.CONNECT_MANAGER)) {
                     if(update.getMessage().getChat().getUserName() == null) {
-                        sendMsg(chatId, "В начале заполните \"Имя пользователя\" в настройках телеграма!");
-                    } else
+                        sendMsg(chatId, Commands.FILL_NAME);
+                    } else {
                         sendMsgToManager(readFromFile(), update.getMessage().getChat().getUserName(), false);
+                        sendMsg(chatId, Commands.MANAGER_WILL_COMING_SOON);
+                    }
                 } else if(msgText.equals(Commands.MANAGER_CHAT)) {
                     changeChatId(update.getMessage().getChatId());
+                    sendMsg(chatId, Commands.YOU_ARE_MANAGER);
                 } else if(msgText.equals(Commands.SELL_NUMBER)) {
                     if(update.getMessage().getChat().getUserName() == null) {
-                        sendMsg(chatId, "В начале заполните \"Имя пользователя\" в настройках телеграма!");
+                        sendMsg(chatId, Commands.FILL_NAME);
                     } else
                         sendMsgToManager(readFromFile(), update.getMessage().getChat().getUserName(), true);
-                } else
-                sendMsg(update.getMessage().getChatId().toString(), "Выберите что вы хотите!");
+                } else if(msgText.equals(Commands.BUY_NUMBER)) {
+                    sendMsg(update.getMessage().getChatId().toString(), Commands.EXAMPLE);
+                    System.out.println(Commands.EXAMPLE);
+                } else if (msgText.equals("/start")) {
+                    sendMsg(chatId, Commands.START_MESSAGE);
+                }
+                else {
+                    if(checkValue(msgText)) {
+                        Sheet sheet = new Sheet();
+                        Stack<String> res = sheet.getData(parseValue(msgText));
+                        if(res.size() == 0) {
+                            sendMsg(chatId, Commands.NUMBERS_ARE_OVER);
+                            return;
+                        } else {
+                            while (res.size() != 0) {
+                                sendMsg(chatId, res.pop());
+                            }
+                            sendMsg(chatId, Commands.USE_BUTTON_CONNECT_WITH_MANAGER);
+                        }
+                    } else {
+                        sendMsg(chatId, Commands.CHANGE_NUMBER);
+                    }
+                }
             }
         } else if(update.hasCallbackQuery()) {
             try {
@@ -44,7 +68,15 @@ public class Bot extends TelegramLongPollingBot {
         //sendMsg(update.getMessage().getChatId().toString(), message);
     }
 
-    private String readFromFile() {
+    private String parseValue(String msgText) {
+        return msgText.toUpperCase().replace("*", ".") + "..*";
+    }
+
+    private boolean checkValue(String msg) {
+        return msg.length() == 6;
+    }
+
+    private synchronized String readFromFile() {
         File file = new File("ManagerId");
         BufferedReader br;
         String res = "";
@@ -108,7 +140,7 @@ public class Bot extends TelegramLongPollingBot {
         keyboard.add(keyboardSecondRow);
 
         KeyboardRow keyBoardThirdRow = new KeyboardRow();
-        keyBoardThirdRow.add(new KeyboardButton(Commands.CONNECT_WITH_MANAGER));
+        keyBoardThirdRow.add(new KeyboardButton(Commands.CONNECT_MANAGER));
         keyboard.add(keyBoardThirdRow);
 
         replyKeyboardMarkup.setKeyboard(keyboard);
@@ -134,34 +166,15 @@ public class Bot extends TelegramLongPollingBot {
 
     public synchronized void sendMsg(String chatId, String msgText) {
         SendMessage sendMessage = new SendMessage();
-        sendMessage.enableMarkdown(true);
+        sendMessage.enableMarkdown(false);
         sendMessage.setChatId(chatId);
         sendMessage.setReplyMarkup(initReplyButtons());
-        Sheet sheet = new Sheet();
-        List<List<Object>> msg = new ArrayList<List<Object>>();
-        try {
-            msg = sheet.getData();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (GeneralSecurityException e) {
-            e.printStackTrace();
-        }
-
         sendMessage.setText(msgText);
         try {
             sendMessage(sendMessage);
         } catch (TelegramApiException e) {
 
         }
-
-        /*for(List row: msg) {
-            sendMessage.setText(row.get(0).toString());
-            try {
-                sendMessage(sendMessage);
-            } catch (TelegramApiException e) {
-
-            }
-        }*/
     }
 
     public String getBotUsername() {
