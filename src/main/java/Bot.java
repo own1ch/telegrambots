@@ -1,5 +1,6 @@
 import org.telegram.telegrambots.api.methods.send.SendMessage;
 import org.telegram.telegrambots.api.objects.Update;
+import org.telegram.telegrambots.api.objects.User;
 import org.telegram.telegrambots.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.api.objects.replykeyboard.ReplyKeyboardMarkup;
 import org.telegram.telegrambots.api.objects.replykeyboard.buttons.InlineKeyboardButton;
@@ -18,30 +19,31 @@ public class Bot extends TelegramLongPollingBot {
     public void onUpdateReceived(Update update) {
         if(update.hasMessage()) {
             String chatId = update.getMessage().getChatId().toString();
+            User user = update.getMessage().getFrom();
             if(update.getMessage().hasText()) {
                 String msgText = update.getMessage().getText();
                 if(msgText.equals(Commands.CONNECT_MANAGER)) {
                     if(update.getMessage().getChat().getUserName() == null) {
-                        sendMsg(chatId, Commands.FILL_NAME);
+                        sendMsg(user, chatId, Commands.FILL_NAME);
                     } else {
                         sendMsgToManager(readFromFile(), update.getMessage().getChat().getUserName(), false);
-                        sendMsg(chatId, Commands.MANAGER_WILL_COMING_SOON);
+                        sendMsg(user, chatId, Commands.MANAGER_WILL_COMING_SOON);
                     }
                 } else if(msgText.equals(Commands.MANAGER_CHAT)) {
                     changeChatId(update.getMessage().getChatId());
-                    sendMsg(chatId, Commands.YOU_ARE_MANAGER);
+                    sendMsg(user, chatId, Commands.YOU_ARE_MANAGER);
                 } else if(msgText.equals(Commands.SELL_NUMBER)) {
                     if(update.getMessage().getChat().getUserName() == null) {
-                        sendMsg(chatId, Commands.FILL_NAME);
+                        sendMsg(user, chatId, Commands.FILL_NAME);
                     } else {
                         sendMsgToManager(readFromFile(), update.getMessage().getChat().getUserName(), true);
-                        sendMsg(chatId, Commands.MANAGER_WILL_COMING_SOON);
+                        sendMsg(user, chatId, Commands.MANAGER_WILL_COMING_SOON);
                     }
                 } else if(msgText.equals(Commands.BUY_NUMBER)) {
-                    sendMsg(update.getMessage().getChatId().toString(), Commands.EXAMPLE);
+                    sendMsg(user, update.getMessage().getChatId().toString(), Commands.EXAMPLE);
                     System.out.println(Commands.EXAMPLE);
                 } else if (msgText.equals("/start")) {
-                    sendMsg(chatId, Commands.START_MESSAGE);
+                    sendMsg(user, chatId, Commands.START_MESSAGE);
                 }
                 else {
                     if(checkValue(msgText)) {
@@ -51,11 +53,11 @@ public class Bot extends TelegramLongPollingBot {
                         Sheet sheet = new Sheet();
                         Stack<String> res = sheet.getData(parseValue(msgText));
                         if(res.size() == 0) {
-                            sendMsg(chatId, Commands.NUMBERS_ARE_OVER);
+                            sendMsg(user, chatId, Commands.NUMBERS_ARE_OVER);
                             return;
                         } else {
                             while (res.size() != 0) {
-                                sendMsg(chatId, res.pop());
+                                sendMsg(user, chatId, res.pop());
                             }
 
                             try {
@@ -65,7 +67,7 @@ public class Bot extends TelegramLongPollingBot {
                             }
                         }
                     } else {
-                        sendMsg(chatId, Commands.CHANGE_NUMBER);
+                        sendMsg(user, chatId, Commands.CHANGE_NUMBER);
                     }
                 }
             }
@@ -233,7 +235,7 @@ public class Bot extends TelegramLongPollingBot {
         return sendMessage;
     }
 
-    public synchronized void sendMsg(String chatId, String msgText) {
+    public synchronized void sendMsg(User user, String chatId, String msgText) {
         SendMessage sendMessage = new SendMessage(chatId, msgText);
         sendMessage.enableMarkdown(false);
         sendMessage.setReplyMarkup(initReplyButtons());
@@ -242,6 +244,8 @@ public class Bot extends TelegramLongPollingBot {
         } catch (TelegramApiException e) {
             e.printStackTrace();
         }
+        writeLogs("Пользователю " + user.getUserName() +
+                " было отправлено сообщение " + msgText);
     }
 
     public synchronized SendMessage sendMsg(String chatId) {
@@ -252,10 +256,10 @@ public class Bot extends TelegramLongPollingBot {
     }
 
     public String getBotUsername() {
-        return "nomera_kuplyaprodaja_bot";
+        return Commands.BOT_USERNAME;
     }
 
     public String getBotToken() {
-        return "846951660:AAEomYrbAEiRmfNFJ0hAOMz16Sm1DaygE7g";
+        return Commands.BOT_TOKEN;
     }
 }
