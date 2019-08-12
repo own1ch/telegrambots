@@ -38,6 +38,7 @@ public class Bot extends TelegramLongPollingBot {
                     } else {
                         sendMsgToManager(readFromFile(), update.getMessage().getChat().getUserName(), true);
                         sendMsg(user, chatId, Commands.MANAGER_WILL_COMING_SOON);
+                        System.out.println(Commands.MANAGER_WILL_COMING_SOON);
                     }
                 } else if(msgText.equals(Commands.BUY_NUMBER)) {
                     sendMsg(user, update.getMessage().getChatId().toString(), Commands.EXAMPLE);
