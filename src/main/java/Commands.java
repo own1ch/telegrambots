@@ -17,6 +17,8 @@ public class Commands {
             "и менеджер свяжется с вами!";
     public static String CHANGE_NUMBER = "Вы неправильно ввели маску номера!";
     public static String MANAGER_WILL_COMING_SOON = "Менеджер скоро с вами свяжется!";
+    public static String MESSAGE_TO_MANAGER = "С вами хочет связаться пользователь @";
+    public static String TO_MANAGER_ABOUT_SALES = "С вами хочет связаться пользователь @%s по поводу продажи номера!";
     public static ArrayList<String> TABS = new ArrayList<String>();
     public static String BOT_TOKEN = "846951660:AAEomYrbAEiRmfNFJ0hAOMz16Sm1DaygE7g";
     public static String BOT_USERNAME = "nomera_kuplyaprodaja_bot";
@@ -59,6 +61,10 @@ public class Commands {
                     BOT_TOKEN = text;
                 } else if(strLine.contains("BOT_USERNAME")) {
                     BOT_USERNAME = text;
+                } else if(strLine.contains("MESSAGE_TO_MANAGER")) {
+                    MESSAGE_TO_MANAGER = text;
+                } else if(strLine.contains("TO_MANAGER_ABOUT_SALES")) {
+                    TO_MANAGER_ABOUT_SALES = text;
                 }
             }
             fstream.close();

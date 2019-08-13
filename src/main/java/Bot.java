@@ -215,10 +215,9 @@ public class Bot extends TelegramLongPollingBot {
         sendMessage.enableMarkdown(false);
         sendMessage.setChatId(chatId);
         if(!forSales) {
-            sendMessage.setText("С вами хочет связаться пользователь @" + user);
+            sendMessage.setText(Commands.MESSAGE_TO_MANAGER + user);
         } else {
-            sendMessage.setText("С вами хочет связаться пользователь @" + user
-                    + " по поводу продажи номера!");
+            sendMessage.setText(String.format(Commands.TO_MANAGER_ABOUT_SALES,user));
         }
         try {
             sendMessage(sendMessage);
